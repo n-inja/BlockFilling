@@ -31,6 +31,8 @@ window.onload = function () {
 
 var main = function () {
 	ctx.clearRect(0, 0, 640, 480);
+	if(player.isGround)
+		drawRect(10, 10, 100, 100, "#101010");
 	if(mode == 0) {
 		if(left()) {
 			mode = 1;
@@ -760,7 +762,7 @@ Player.prototype.update = function() {
                     if (this.y + this.velocityY < block[i].getY() + block[i].getHeight() && this.x < block[i].getX() + block[i].getWidth() && this.x + this.width > block[i].getX() && this.y + this.height > block[i].getY()) {
                         tempY = block[i].getY() + block[i].getHeight();
                         this.velocityY = -this.velocityY;
-                        this.isGround = true;
+                        this.isGround = false;
                     }
                 }
             }
@@ -774,10 +776,10 @@ Player.prototype.update = function() {
                 this.velocityY += this.accelerationY;
         }
         else {
-            var tempGround = true;
+            var tempGround = false;
             for (var i = 0; i < block.length; i++) {
-                if (this.y + this.height + 1 > block[i].getY() && (this.x > block[i].getX() + block[i].getWidth() || this.x + this.width < block[i].getX())) {
-                    tempGround = false;
+                if (this.y + this.height == block[i].getY() && (this.x > block[i].getX() + block[i].getWidth() && this.x + this.width < block[i].getX())) {
+                    tempGround = true;
                 }
             }
             this.isGround = tempGround;
@@ -833,6 +835,7 @@ Player.prototype.update = function() {
 
                 if (this.x + this.width - minSide > 0 && temp && minSide > 30) {
                     block.push(new Block(this.x + this.width - minSide, this.y + this.height, minSide, minSide, false));
+					jumpLock = true;
                 }
             }
 			}
