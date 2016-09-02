@@ -31,8 +31,6 @@ window.onload = function () {
 
 var main = function () {
 	ctx.clearRect(0, 0, 640, 480);
-	if(player.isGround)
-		drawRect(10, 10, 100, 100, "#101010");
 	if(mode == 0) {
 		if(left()) {
 			mode = 1;
