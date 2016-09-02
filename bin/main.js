@@ -249,7 +249,7 @@ function select() {
 		for (var j = 0; j < 7; j++) {
 			for (var k = 0; k < 3; k++) {
 				if (num[i][j][k] == 1) {
-					if(stage <= i)
+					if(stage%5 <= i)
 						block.push(new Block(1360 + i * 140 + k * 20 - 640, 200 + j * 20, 20, 20, true));
 					else
 						airBlock.push(new AirBlock(1360 + i * 140 + k * 20 - 640, 200 + j * 20, 20, 20, true));
@@ -268,7 +268,7 @@ function select() {
 				block.push(new Block(j * 20 + k*140, windowY - 40 + i * 20, 20, 20, true));
 	for (var i = 0; i < 5; i++)
 		for (var j = 0; j < 5; j++)
-			if (stage <= i)
+			if (stage%5 <= i)
 				airBlock.push(new AirBlock(j * 20 + i * 140 + 1340 - 640, windowY - 40, 20, 20, true));
 			else
 				block.push(new Block(j * 20 + i * 140 + 1340 - 640, windowY - 40, 20, 20, true));
