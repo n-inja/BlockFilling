@@ -260,8 +260,8 @@ function select() {
 
 	for (var i = 0; i < 32; i++)
 		block.push(new Block(i*20, windowY - 20, 20, 20, true));
-	for (var i = 0; i < 640 / 20; i++)
-		block.push(new Block(i * 20, windowY - 40, 20, 20, true));
+	/*for (var i = 0; i < 640 / 20; i++)
+		block.push(new Block(i * 20, windowY - 40, 20, 20, true));*/
 	for (var i = 0; i < 2; i++)
 		for (var j = 33; j < 35; j++)
 			for (var k = 0; k < 5; k++)
