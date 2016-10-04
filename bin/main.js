@@ -22,9 +22,23 @@ window.onload = function () {
 	screenCanvas.height = 480;
 	ctx = screenCanvas.getContext('2d');
 
-	screenCanvas.addEventListener('mousedown', mouseDown, true);
-	screenCanvas.addEventListener('mouseup', mouseUp, true);
+  var getDevice = (function(){
+    var ua = navigator.userAgent;
+    if(ua.indexOf('iPhone') > 0 || ua.indexOf('iPod') > 0 || ua.indexOf('Android') > 0 && ua.indexOf('Mobile') > 0){
+        return 'sp';
+    }else if(ua.indexOf('iPad') > 0 || ua.indexOf('Android') > 0){
+        return 'sp';
+    }else{
+        return 'other';
+    }
+  })();
 
+  if(getDevice == 'other'){
+  	screenCanvas.addEventListener('mousedown', mouseDown, true);
+  	screenCanvas.addEventListener('mouseup', mouseUp, true);
+  }else{
+    touchSetting();
+  }
 	select();
 
 };
@@ -274,18 +288,23 @@ function select() {
 				block.push(new Block(j * 20 + i * 140 + 1340 - 640, windowY - 40, 20, 20, true));
 }
 
-function touch() {
+function touchSetting() {
 	if(window.TouchEvent){
 		if(window.addEventListener){
-			function TouchEventFunc(e){
-				console.log("タッチスクリーン入力された");
-			}
+      function touchDown(event) {
+      	pressKey[0] = true;
+      }
 
-			var element = document.getElementById("aaa");
+      function touchUp(event) {
+      	pressKey[0] = false;
+        pressKeyLock[0] = false;
+    		jumpLock = false;
+      }
 
-			element.addEventListener("touchstart",TouchEventFunc);
+			var element = document.getElementById("disp");
 
-			element.addEventListener("touchend",TouchEventFunc);
+			element.addEventListener("touchstart",touchDown);
+			element.addEventListener("touchend",touchUp);
 		}
 	}
 }
