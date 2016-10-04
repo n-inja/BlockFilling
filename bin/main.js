@@ -24,15 +24,13 @@ window.onload = function () {
 
 	screenCanvas.addEventListener('mousedown', mouseDown, true);
 	screenCanvas.addEventListener('mouseup', mouseUp, true);
-   
+
 	select();
-	
+
 };
 
 var main = function () {
 	ctx.clearRect(0, 0, 640, 480);
-	if(player.isGround)
-		drawRect(10, 10, 100, 100, "#101010");
 	if(mode == 0) {
 		if(left()) {
 			mode = 1;
@@ -137,7 +135,7 @@ function reset(s) {
 	}
 
 }
-	
+
 function select() {
 	start = true;
 	cameraX = 0;
@@ -228,7 +226,7 @@ function select() {
 			[ 0, 0, 1 ],
 			[ 1, 1, 0 ],
 			[]
-		]	
+		]
 	];
 	for (var i = 0; i < 16; i++) {
 		for (var j = 0; j < 30; j++) {
@@ -251,7 +249,7 @@ function select() {
 		for (var j = 0; j < 7; j++) {
 			for (var k = 0; k < 3; k++) {
 				if (num[i][j][k] == 1) {
-					if(stage <= i)
+					if(stage%5 <= i)
 						block.push(new Block(1360 + i * 140 + k * 20 - 640, 200 + j * 20, 20, 20, true));
 					else
 						airBlock.push(new AirBlock(1360 + i * 140 + k * 20 - 640, 200 + j * 20, 20, 20, true));
@@ -262,15 +260,15 @@ function select() {
 
 	for (var i = 0; i < 32; i++)
 		block.push(new Block(i*20, windowY - 20, 20, 20, true));
-	for (var i = 0; i < 640 / 20; i++)
-		block.push(new Block(i * 20, windowY - 40, 20, 20, true));
+	/*for (var i = 0; i < 640 / 20; i++)
+		block.push(new Block(i * 20, windowY - 40, 20, 20, true));*/
 	for (var i = 0; i < 2; i++)
 		for (var j = 33; j < 35; j++)
 			for (var k = 0; k < 5; k++)
 				block.push(new Block(j * 20 + k*140, windowY - 40 + i * 20, 20, 20, true));
 	for (var i = 0; i < 5; i++)
 		for (var j = 0; j < 5; j++)
-			if (stage <= i)
+			if (stage%5 <= i)
 				airBlock.push(new AirBlock(j * 20 + i * 140 + 1340 - 640, windowY - 40, 20, 20, true));
 			else
 				block.push(new Block(j * 20 + i * 140 + 1340 - 640, windowY - 40, 20, 20, true));
@@ -513,7 +511,7 @@ Block.prototype.update = function() {
 		this.trans++;
 		this.t = 0;
 	}
-}	
+}
 
 Block.prototype.draw = function() {
 	if(this.trans == 0) {
@@ -691,7 +689,7 @@ Player.prototype.update = function() {
     }
     else {
         var tempX = -1, tempY = -1;
-        
+
         if (windowX + cameraX < stageX && this.x - cameraX > windowX * 2 / 3)
             cameraX = this.x - windowX * 2 / 3;
         if (cameraX > 0 && this.x - cameraX < windowX / 3)
@@ -889,4 +887,3 @@ Player.prototype.getX = function() {
 Player.prototype.getY = function() {
 	return this.y;
 };
-
