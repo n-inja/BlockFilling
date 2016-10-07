@@ -144,7 +144,7 @@ Game.prototype.update = function(){
 		if (this.player.getDeathCnt() < -100)
 			this.select();
 		if (!this.start && this.player.getY() > this.windowY + 100)
-			this.select();
+			this.reset(this.stage);
 		if (!this.start && this.player.getDotY() < -100 && this.player.getClearCnt() > 50) {
 			this.stage++;
 			this.select();
