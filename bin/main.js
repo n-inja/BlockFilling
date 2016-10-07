@@ -1,14 +1,5 @@
 var ctx;
-var block = new Array();
-var airBlock = new Array();
-var circle = new Array();
-var player;
-var windowX = 640, windowY = 480;
-var stageX, stageY;
-var start = false;
-var stage = 0;
 var pressKey = new Array(2);
-var mode = 0;
 pressKey[0] = false;
 pressKey[1] = false;
 var pressKeyLock = new Array(2);
@@ -16,78 +7,382 @@ pressKeyLock[0] = false;
 pressKeyLock[1] = false;
 var jumpLock = false;
 
+//初期化
 window.onload = function () {
 	screenCanvas = document.getElementById('disp');
 	screenCanvas.width = 640;
 	screenCanvas.height = 480;
 	ctx = screenCanvas.getContext('2d');
+    game = new Game();
+    
+    var getDevice = (function(){
+        var ua = navigator.userAgent;
+        if(ua.indexOf('iPhone') > 0 || ua.indexOf('iPod') > 0 || ua.indexOf('Android') > 0 && ua.indexOf('Mobile') > 0){
+            return 'sp';
+        }else if(ua.indexOf('iPad') > 0 || ua.indexOf('Android') > 0){
+            return 'sp';
+        }else{
+            return 'other';
+        }
+    })();
 
-  var getDevice = (function(){
-    var ua = navigator.userAgent;
-    if(ua.indexOf('iPhone') > 0 || ua.indexOf('iPod') > 0 || ua.indexOf('Android') > 0 && ua.indexOf('Mobile') > 0){
-        return 'sp';
-    }else if(ua.indexOf('iPad') > 0 || ua.indexOf('Android') > 0){
-        return 'sp';
+    if(getDevice == 'other'){
+        screenCanvas.addEventListener('mousedown', mouseDown, true);
+        screenCanvas.addEventListener('mouseup', mouseUp, true);
     }else{
-        return 'other';
+        touchSetting();
     }
-  })();
-
-  if(getDevice == 'other'){
-  	screenCanvas.addEventListener('mousedown', mouseDown, true);
-  	screenCanvas.addEventListener('mouseup', mouseUp, true);
-  }else{
-    touchSetting();
-  }
-	select();
-
+    game.select();
 };
 
-var main = function () {
-	ctx.clearRect(0, 0, 640, 480);
-	if(mode == 0) {
-		if(left()) {
-			mode = 1;
-			select();
+function touchSetting() {
+    if(window.TouchEvent){
+        if(window.addEventListener){
+            function touchDown(event) {
+                pressKey[0] = true;
+            }
+            
+            function touchUp(event) {
+                pressKey[0] = false;
+                pressKeyLock[0] = false;
+                jumpLock = false;
+            }
+
+			var element = document.getElementById("disp");
+
+			element.addEventListener("touchstart",touchDown);
+			element.addEventListener("touchend",touchUp);
 		}
-	} else if(mode == 1) {
-		if (typeof (this.t) == "undefined") {
-			this.t = 0;
-		}
-		player.update();
-		for (var i = 0; i < block.length; i++) {
-			block[i].update();
-		}
-		for(var i = 0; i < circle.length; i++) {
-			circle[i].update();
-		}
-		for (var i = 0; i < block.length; i++) {
-			block[i].draw();
-		}
-		for (var i = 0; i < airBlock.length; i++) {
-			airBlock[i].draw();
-		}
-		for(var i = 0; i < circle.length; i++) {
-			circle[i].draw();
-		}
-		player.draw();
-		for (var i = 0; i < 5; i++) {
-			if (player.getX() > 700 + i * 140 && player.getX() < 700 + (i + 1) * 140 && player.getY() > windowY && start)
-				reset(i);
-		}
-		if (player.getDeathCnt() < -100)
-			select();
-		if (!start && player.getY() > windowY + 100)
-			select();
-		if (!start && player.getDotY() < -100 && player.getClearCnt() > 50) {
-			stage++;
-			select();
-		}
-		this.t++;
 	}
-	return;
+}
+
+function mouseDown(event) {
+	var ck = event.button;
+	if (ck == 0) {
+		pressKey[0] = true;
+	} else if (ck == 2) {
+		pressKey[1] = true;
+	}
+}
+
+function mouseUp(event) {
+	var ck = event.button;
+	if (ck == 0) {
+		pressKey[0] = false;
+        pressKeyLock[0] = false;
+		jumpLock = false;
+	} else if (ck == 2) {
+		pressKey[1] = false;
+        pressKeyLock[1] = false;
+		jumpLock = false;
+	}
+}
+
+function right() {
+    if(pressKey[1] && !pressKeyLock[1]) {
+        pressKeyLock[1] = true;
+        return true;
+    }
+    else {
+        return false;
+    }
+}
+
+function left() {
+    if(pressKey[0] && !pressKeyLock[0]) {
+        pressKeyLock[0] = true;
+        return true;
+    }
+    else {
+        return false;
+    }
+}
+
+//メイン関数
+var main = function() {
+    game.update();
+    game.draw();
 };
 setInterval(main, 1000/60);
+
+var Game = function() {
+    this.block = new Array();
+    this.airBlock = new Array();
+    this.circle = new Array();
+    this.player;
+    this.windowX = 640;
+    this.windowY = 480;
+    this.stageX;
+    this.stageY;
+    this.cameraX = 0;
+    this.cameraY = 0;
+    this.start = false;
+    this.stage = 0;
+    this.lock = true;
+    this.isHub = true;
+    this.t = 0;
+};
+
+Game.prototype.update = function(){
+    if(this.lock){
+        if(left()){
+            this.lock = false;
+            this.select();
+        }
+    }
+    else{
+		this.player.update(this.block, this.airBlock, this.circle, this.stageX, this.stageY, this.isHub);
+		for (var i = 0; i < this.block.length; i++) {
+			this.block[i].update();
+		}
+		for(var i = 0; i < this.circle.length; i++) {
+			this.circle[i].update();
+		}
+        
+        for (var i = 0; i < 5; i++) {
+			if (this.player.getX() > 700 + i * 140 && this.player.getX() < 700 + (i + 1) * 140 && this.player.getY() > this.windowY && this.start)
+				this.reset(i);
+		}
+        if(this.player.getClearCnt() > 0 && this.circle.length > 0)
+            this.circle = new Array();
+		if (this.player.getDeathCnt() < -100)
+			this.select();
+		if (!this.start && this.player.getY() > this.windowY + 100)
+			this.select();
+		if (!this.start && this.player.getDotY() < -100 && this.player.getClearCnt() > 50) {
+			this.stage++;
+			this.select();
+		}
+        if (this.windowX + this.cameraX < this.stageX && this.player.getX() - this.cameraX > this.windowX * 2 / 3)
+            this.cameraX = this.player.getX() - this.windowX * 2 / 3;
+        if (this.cameraX > 0 && this.player.getX() - this.cameraX < this.windowX / 3)
+            this.cameraX = this.player.getX() - this.windowX / 3;
+        if (!this.game) {
+            if (left())
+                this.game = true;
+        }
+        this.t++;
+    }
+};
+
+Game.prototype.draw = function() {
+    ctx.clearRect(0, 0, 640, 480);
+    drawRect(0, 0, 640, 480, "#F0F0F0");
+    if(this.lock){
+        ctx.fillStyle = "#000000";
+        ctx.fillText("Copyright (C) 2016 n-inja All Rights Reserved.", 440, 480);
+    }
+    for (var i = 0; i < this.block.length; i++) {
+        this.block[i].draw(this.cameraX, this.cameraY);
+    }
+    for (var i = 0; i < this.airBlock.length; i++) {
+        this.airBlock[i].draw(this.cameraX, this.cameraY);
+    }
+    for(var i = 0; i < this.circle.length; i++) {
+        this.circle[i].draw(this.cameraX, this.cameraY);
+    }
+    this.player.draw(this.cameraX, this.cameraY);
+}
+
+Game.prototype.reset = function(s) {
+    this.isHub = false;
+	this.start = false;
+	this.cameraX = 0;
+	this.cameraY = 0;
+	this.player = new Player();
+	this.block = new Array();
+	this.circle = new Array();
+	this.airBlock = new Array();
+	switch (s)
+	{
+	case 0:
+		this.stageX = 640;
+		for (var i = 0; i < 2; i++)
+			this.block.push(new Block(this.stageX - 100, this.windowY - 300 + i * 100, 100, 100, false));
+		for (var i = 0; i < 7; i++)
+			this.block.push(new Block(i * 100, this.windowY - 100, 100, 101, false));
+		this.circle.push(new Circle(this.stageX - 80, this.windowY - 380));
+		break;
+	case 1:
+		this.stageX = 1000;
+		for (var i = 0; i < 3; i++)
+			this.block.push(new Block(i * 100, this.windowY - 100, 100, 101, false));
+		for (var i = 0; i < 4; i++)
+			this.block.push(new Block(600 + i * 100, this.windowY - 100, 100, 101, false));
+		for (var i = 0; i < 3; i++)
+			this.airBlock.push(new AirBlock(300 + i * 100, this.windowY - 100, 100, 101, false));
+		this.circle.push(new Circle(this.stageX - 80, this.windowY - 180));
+		break;
+	case 2:
+		this.stageX = 1040;
+		for (var i = 0; i < 3; i++)
+			this.block.push(new Block(i * 80, this.windowY - 80, 80, 81, false));
+		this.block.push(new Block(160, this.windowY - 160, 80, 80, false));
+		for (var i = 0; i < 6; i++)
+			this.block.push(new Block(this.stageX - 80 - i * 80, this.windowY - 80, 80, 81, false));
+		this.circle.push(new Circle(this.stageX - 80, this.windowY - 380));
+		break;
+	case 3:
+		this.stageX = 640;
+		for (var i = 0; i < 4; i++)
+			this.block.push(new Block(i * 80, this.windowY - 80, 80, 81, false));
+		for (var i = 0; i < 4; i++)
+			this.airBlock.push(new AirBlock(i * 80 + 320, this.windowY - 80, 80, 81, false));
+		this.circle.push(new Circle(20, 20));
+		break;
+	case 4:
+		this.stageX = 640;
+		for (var i = 0; i < 9; i++)
+			this.block.push(new Block(i * 40, this.windowY - 40, 40, 41, false));
+		for (var i = 0; i < 3; i++)
+			this.block.push(new Block(i * 60 + 230, 0, 60, 60, false));
+		for (var i = 0; i < 2; i++)
+			this.block.push(new Block(i * 120 + 230, 60, 60, 60, false));
+		this.circle.push(new Circle(290, 60));
+		break;
+	default:
+		break;
+	}
+};
+
+Game.prototype.select = function(){
+	this.start = true;
+    this.isHub = true;
+	this.cameraX = 0;
+	this.cameraY = 0;
+	this.stageX = 2000 - 640;
+	this.player = new Player();
+	this.block = new Array();
+	this.airBlock = new Array();
+	this.circle = new Array();
+	var logo = [
+		[],
+		[0, 1, 1, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+		[0, 1, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+		[0, 1, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+		[0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0, 1, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+		[0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0, 1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+		[0, 1, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+		[],
+		[0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 1, 0, 1, 1, 0, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+		[0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+		[0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 1, 1, 0, 0, 0, 1, 1, 0],
+		[0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0],
+		[0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0, 1, 0, 0, 1, 1, 0],
+		[0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0, 1, 0, 0, 0, 1, 0],
+		[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0],
+		[]
+	];
+	var cha = [
+		[],
+		[0, 0, 1, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+		[0, 1, 2, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+		[0, 1, 2, 0, 1, 0, 0, 0, 1, 0, 1, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0],
+		[0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0],
+		[0, 1, 0, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0],
+		[0, 0, 1, 1, 0, 0, 0, 1, 0, 0, 1, 1, 1, 0, 1, 0, 1, 0, 1, 1, 0, 0, 0, 0, 0, 0],
+		[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0,0 ],
+		[],
+		[0, 0, 1, 1, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+		[0, 1, 0, 2, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0],
+		[0, 1, 0, 2, 1, 0, 1, 0, 0, 0, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 1, 1, 1, 0],
+		[0, 1, 0, 0, 1, 0, 1, 0, 0, 0, 1, 1, 0, 0, 1, 1, 1, 0, 1, 0, 1, 0, 0, 1, 0, 0],
+		[0, 1, 0, 0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0],
+		[0, 0, 1, 1, 0, 0, 0, 1, 1, 0, 1, 0, 0, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0],
+		[]
+	];
+	var num = [
+		[
+			[],
+			[ 0, 1, 0 ],
+			[ 1, 1, 0 ],
+			[ 0, 1, 0 ],
+			[ 0, 1, 0 ],
+			[ 1, 1, 1 ],
+			[]
+		],
+		[
+			[],
+			[ 1, 1, 0 ],
+			[ 0, 0, 1 ],
+			[ 0, 1, 0 ],
+			[ 1, 0, 0 ],
+			[ 1, 1, 1 ],
+			[]
+		],
+		[
+			[],
+			[ 1, 1, 0 ],
+			[ 0, 0, 1 ],
+			[ 0, 1, 0 ],
+			[ 0, 0, 1 ],
+			[ 1, 1, 0 ],
+			[]
+		],
+		[
+			[],
+			[ 0, 0, 1 ],
+			[ 0, 1, 1 ],
+			[ 1, 0, 1 ],
+			[ 1, 1, 1 ],
+			[ 0, 0, 1 ],
+			[]
+		],
+		[
+			[],
+			[ 1, 1, 1 ],
+			[ 1, 0, 0 ],
+			[ 1, 1, 0 ],
+			[ 0, 0, 1 ],
+			[ 1, 1, 0 ],
+			[]
+		]
+	];
+	for (var i = 0; i < 16; i++) {
+		for (var j = 0; j < 30; j++) {
+			if(logo[i][j] == 1)
+				this.block.push(new Block(20 + j*20, i*20, 20, 20, true));
+		}
+	}
+	/*
+	for (var i = 0; i < 16; i++) {
+		for (var j = 0; j < 26; j++) {
+			if (cha[i][j] == 1){
+				this.airBlock.push(new AirBlock(680 + j * 20, i * 20 + 40, 20, 20, true));
+			}
+			else if(cha[i][j] == 2)
+				this.block.push(new Block(680 + j * 20, i * 20 + 40, 20, 20, true));
+		}
+	}
+	*/
+	for (var i = 0; i < 5; i++) {
+		for (var j = 0; j < 7; j++) {
+			for (var k = 0; k < 3; k++) {
+				if (num[i][j][k] == 1) {
+					if(this.stage%5 <= i)
+						this.block.push(new Block(1360 + i * 140 + k * 20 - 640, 200 + j * 20, 20, 20, true));
+					else
+						this.airBlock.push(new AirBlock(1360 + i * 140 + k * 20 - 640, 200 + j * 20, 20, 20, true));
+				}
+			}
+		}
+	}
+
+	for (var i = 0; i < 32; i++)
+		this.block.push(new Block(i*20, this.windowY - 20, 20, 20, true));
+	/*for (var i = 0; i < 640 / 20; i++)
+		this.block.push(new Block(i * 20, this.windowY - 40, 20, 20, true));*/
+	for (var i = 0; i < 2; i++)
+		for (var j = 33; j < 35; j++)
+			for (var k = 0; k < 5; k++)
+				this.block.push(new Block(j * 20 + k*140, this.windowY - 40 + i * 20, 20, 20, true));
+	for (var i = 0; i < 5; i++)
+		for (var j = 0; j < 5; j++)
+			if (this.stage%5 <= i)
+				this.airBlock.push(new AirBlock(j * 20 + i * 140 + 1340 - 640, this.windowY - 40, 20, 20, true));
+			else
+				this.block.push(new Block(j * 20 + i * 140 + 1340 - 640, this.windowY - 40, 20, 20, true));
+};
 
 function reset(s) {
 	start = false;
@@ -288,86 +583,15 @@ function select() {
 				block.push(new Block(j * 20 + i * 140 + 1340 - 640, windowY - 40, 20, 20, true));
 }
 
-function touchSetting() {
-	if(window.TouchEvent){
-		if(window.addEventListener){
-      function touchDown(event) {
-      	pressKey[0] = true;
-      }
+//var cameraX = 0;
+//var cameraY = 0;
 
-      function touchUp(event) {
-      	pressKey[0] = false;
-        pressKeyLock[0] = false;
-    		jumpLock = false;
-      }
-
-			var element = document.getElementById("disp");
-
-			element.addEventListener("touchstart",touchDown);
-			element.addEventListener("touchend",touchUp);
-		}
-	}
-}
-
-function mouseDown(event) {
-	var ck = event.button;
-	if (ck == 0) {
-		pressKey[0] = true;
-	} else if (ck == 2) {
-		pressKey[1] = true;
-	}
-}
-
-function mouseUp(event) {
-	var ck = event.button;
-	if (ck == 0) {
-		pressKey[0] = false;
-        pressKeyLock[0] = false;
-		jumpLock = false;
-	} else if (ck == 2) {
-		pressKey[1] = false;
-        pressKeyLock[1] = false;
-		jumpLock = false;
-	}
-}
-
-function right() {
-    if(pressKey[1] && !pressKeyLock[1]) {
-        pressKeyLock[1] = true;
-        return true;
-    }
-    else {
-        return false;
-    }
-}
-
-function jump() {
-    if(pressKey[0] && !jumpLock) {
-		jumpLock = true;
-        return true;
-    }
-    else {
-        return false;
-    }
-}
-
-function left() {
-    if(pressKey[0] && !pressKeyLock[0]) {
-        pressKeyLock[0] = true;
-        return true;
-    }
-    else {
-        return false;
-    }
-}
-
-var cameraX = 0;
-var cameraY = 0;
-
+//継承関数
 var inherits = function(childCtor, parentCtor) {
     Object.setPrototypeOf(childCtor.prototype, parentCtor.prototype);
 };
 
+//描画関数
 function drawRect(x, y, width, height, color) {
     ctx.beginPath();
 	ctx.lineWidth = 1;
@@ -407,6 +631,8 @@ function drawTriangle(x1, y1, x2, y2, x3, y3, color) {
 }
 
 function drawPoint(x, y, color) {
+    drawRect(x, y, 1, 1, color);
+    return;
     ctx.beginPath();
     ctx.fillStyle = color;
 	ctx.strokeStyle = color;
@@ -470,7 +696,7 @@ Block.prototype.getT = function() {
 	return this.t;
 };
 
-Block.prototype.line = function() {
+Block.prototype.line = function(cameraX, cameraY) {
     if(this.isRight){
         if(this.t*2 < this.fillSpeed) {
             var delta = (1.0 - Math.cos(Math.PI * this.t / this.fillSpeed));
@@ -499,7 +725,7 @@ Block.prototype.line = function() {
 	}
 };
 
-Block.prototype.fill = function() {
+Block.prototype.fill = function(cameraX, cameraY) {
 	drawLine(this.x - cameraX, this.y - cameraY, this.x + this.width - cameraX, this.y - cameraY, this.color);
 	drawLine(this.x - cameraX, this.y - cameraY, this.x - cameraX, this.y + this.height - cameraY, this.color);
 	drawLine(this.x + this.width - cameraX, this.y - cameraY, this.x + this.width - cameraX, this.y + this.height - cameraY, this.color);
@@ -516,7 +742,7 @@ Block.prototype.fill = function() {
 	}
 };
 
-Block.prototype.stable = function() {
+Block.prototype.stable = function(cameraX, cameraY) {
 	drawRect(this.x - cameraX, this.y - cameraY, this.width, this.height, this.color);
 };
 
@@ -532,13 +758,13 @@ Block.prototype.update = function() {
 	}
 }
 
-Block.prototype.draw = function() {
+Block.prototype.draw = function(cameraX, cameraY) {
 	if(this.trans == 0) {
-		this.line();
+		this.line(cameraX, cameraY);
 	} else if(this.trans == 1) {
-		this.fill();
+		this.fill(cameraX, cameraY);
 	} else {
-		this.stable();
+		this.stable(cameraX, cameraY);
 	}
 }
 
@@ -574,7 +800,7 @@ AirBlock.prototype.getHeight = function() {
 	return this.height;
 }
 
-AirBlock.prototype.draw = function() {
+AirBlock.prototype.draw = function(cameraX, cameraY) {
 	drawStrokeRect(this.x - cameraX, this.y - cameraY, this.width, this.height, this.color);
 };
 
@@ -597,13 +823,12 @@ Circle.prototype.update = function() {
     this.t++;
 };
 
-Circle.prototype.draw = function() {
+Circle.prototype.draw = function(cameraX, cameraY) {
     drawCircle(this.x + this.r - cameraX, this.y + this.r - cameraY, this.r, this.color);
     var x1 = this.x + this.width / 2 + this.r * Math.cos(this.t*Math.PI / this.T) - cameraX, y1 = this.y + this.height / 2 + this.r * Math.sin(this.t*Math.PI / this.T) - cameraY;
     var x2 = Math.floor(this.x + this.width / 2 + this.r * Math.cos((this.t + this.T*2/3)*Math.PI / this.T)) - cameraX, y2 = Math.floor(this.y + this.height / 2 + this.r * Math.sin((this.t + this.T*2/3)*Math.PI / this.T)) - cameraY;
     var x3 = Math.floor(this.x + this.width / 2 + this.r * Math.cos((this.t + this.T*4/3)*Math.PI / this.T)) - cameraX, y3 = Math.floor(this.y + this.height / 2 + this.r * Math.sin((this.t + this.T*4/3)*Math.PI / this.T)) - cameraY;
     drawTriangle(x1, y1, x2, y2, x3, y3, this.color);
-	console.log("" + this.x + this.width / 2 + " " + this.r + " " + Math.cos(this.t*Math.PI / this.T) + " " + cameraX + " " + x3 + " " + y3);
     x1 = Math.floor(this.x + this.width / 2 + this.r * Math.cos((this.t + this.T/3)*Math.PI / this.T)) - cameraX;
     y1 = Math.floor(this.y + this.height / 2 + this.r * Math.sin((this.t + this.T/3)*Math.PI / this.T)) - cameraY;
     x2 = Math.floor(this.x + this.width / 2 + this.r * Math.cos((this.t + this.T)*Math.PI / this.T)) - cameraX;
@@ -654,7 +879,17 @@ var Player = function() {
     }
 };
 
-Player.prototype.draw = function() {
+Player.prototype.jump = function() {
+    if(pressKey[0] && !jumpLock) {
+		jumpLock = true;
+        return true;
+    }
+    else {
+        return false;
+    }
+}
+
+Player.prototype.draw = function(cameraX, cameraY) {
     if (this.clearCnt > 50) {
         for (var i = 0; i < 50; i++) {
             for (var j = 0; j < 50; j++) {
@@ -680,7 +915,7 @@ Player.prototype.draw = function() {
     }
 };
 
-Player.prototype.update = function() {
+Player.prototype.update = function(block, airBlock, circle, stageX, stageY, isHub) {
     if (this.clearCnt > 50) {
         for (var i = 0; i < 50; i++) {
             for (var j = 0; j < 50; j++) {
@@ -709,15 +944,6 @@ Player.prototype.update = function() {
     else {
         var tempX = -1, tempY = -1;
 
-        if (windowX + cameraX < stageX && this.x - cameraX > windowX * 2 / 3)
-            cameraX = this.x - windowX * 2 / 3;
-        if (cameraX > 0 && this.x - cameraX < windowX / 3)
-            cameraX = this.x - windowX / 3;
-        if (!this.game) {
-            if (left())
-                this.game = true;
-            return;
-        }
 		for (var i = 0; i < circle.length; i++) {
 			if (this.x + this.width > circle[i].getX() && this.x < circle[i].getX() + circle[i].getWidth() && this.y + this.height > circle[i].getY() && this.y < circle[i].getY() + circle[i].getHeight()) {
 				this.clearCnt = 1;
@@ -735,7 +961,6 @@ Player.prototype.update = function() {
 		}
         if (this.clearCnt > 0) {
             this.clearCnt++;
-            circle = new Array();
         }
         if (this.velocityX > 0) {
             if (this.x + this.velocityX + this.width > stageX) {
@@ -802,64 +1027,64 @@ Player.prototype.update = function() {
             this.isGround = tempGround;
         }
 
-        if ((!this.isGround) && !start) {
+        if (!this.isGround && !isHub) {
 			if(left()) {
-            var minSide = 1000;
-            for (var i = 0; i < airBlock.length; i++) {
-                if (this.velocityX > 0) {
-                    if (this.x < airBlock[i].getX() + airBlock[i].getWidth() && this.x > airBlock[i].getX() && this.y + this.height < airBlock[i].getY() && minSide > airBlock[i].getY() - this.y - this.height)
+                var minSide = 3000;
+                for (var i = 0; i < airBlock.length; i++) {
+                    if (this.velocityX > 0) {
+                        if (this.x < airBlock[i].getX() + airBlock[i].getWidth() && this.x > airBlock[i].getX() && this.y + this.height < airBlock[i].getY() && minSide > airBlock[i].getY() - this.y - this.height)
                         minSide = airBlock[i].getY() - this.y - this.height;
-                }
-                else
-                {
-                    if (this.x + this.width < airBlock[i].getX() + airBlock[i].getWidth() && this.x + this.width > airBlock[i].getX() && this.y + this.height < airBlock[i].getY() && minSide > airBlock[i].getY() - this.y - this.height)
+                    }
+                    else
+                    {
+                        if (this.x + this.width < airBlock[i].getX() + airBlock[i].getWidth() && this.x + this.width > airBlock[i].getX() && this.y + this.height < airBlock[i].getY() && minSide > airBlock[i].getY() - this.y - this.height)
                         minSide = airBlock[i].getY() - this.y - this.height;
+                    }
                 }
-            }
-            for (var i = 0; i < block.length; i++) {
+                for (var i = 0; i < block.length; i++) {
+                    if (this.velocityX > 0) {
+                        if (this.x < block[i].getX() + block[i].getWidth() && this.x > block[i].getX() && this.y + this.height < block[i].getY() && minSide > block[i].getY() - this.y - this.height)
+                            minSide = block[i].getY() - this.y - this.height;
+                    }
+                    else
+                    {
+                        if (this.x + this.width < block[i].getX() + block[i].getWidth() && this.x + this.width > block[i].getX() && this.y + this.height < block[i].getY() && minSide > block[i].getY() - this.y - this.height)
+                            minSide = block[i].getY() - this.y - this.height;
+                    }
+                }
                 if (this.velocityX > 0) {
-                    if (this.x < block[i].getX() + block[i].getWidth() && this.x > block[i].getX() && this.y + this.height < block[i].getY() && minSide > block[i].getY() - this.y - this.height)
-                        minSide = block[i].getY() - this.y - this.height;
-                }
-                else
-                {
-                    if (this.x + this.width < block[i].getX() + block[i].getWidth() && this.x + this.width > block[i].getX() && this.y + this.height < block[i].getY() && minSide > block[i].getY() - this.y - this.height)
-                        minSide = block[i].getY() - this.y - this.height;
-                }
-            }
-            if (this.velocityX > 0) {
-                var temp = true;
-                for (var i = 0; i < block.length; i++) {
-                    if (((this.x + minSide >= block[i].getX() && this.x + minSide <= block[i].getX() + block[i].getWidth()) || (this.x >= block[i].getX() && this.x <= block[i].getX() + block[i].getWidth())) && ((this.y + minSide + this.height > block[i].getY() && this.y + this.height + minSide < block[i].getY() + block[i].getHeight()) || (this.y + this.height <= block[i].getY() + block[i].getHeight() && this.y + this.height >= block[i].getY())))
-                        temp = false;
-                    if (this.y + this.height + minSide > block[i].getY() && this.x < block[i].getX() + block[i].getWidth() && this.x + minSide > block[i].getX() && this.y + this.height < block[i].getY() + block[i].getHeight())
-                        temp = false;
-                }
+                    var temp = true;
+                    for (var i = 0; i < block.length; i++) {
+                        if (((this.x + minSide >= block[i].getX() && this.x + minSide <= block[i].getX() + block[i].getWidth()) || (this.x >= block[i].getX() && this.x <= block[i].getX() + block[i].getWidth())) && ((this.y + minSide + this.height > block[i].getY() && this.y + this.height + minSide < block[i].getY() + block[i].getHeight()) || (this.y + this.height <= block[i].getY() + block[i].getHeight() && this.y + this.height >= block[i].getY())))
+                            temp = false;
+                        if (this.y + this.height + minSide > block[i].getY() && this.x < block[i].getX() + block[i].getWidth() && this.x + minSide > block[i].getX() && this.y + this.height < block[i].getY() + block[i].getHeight())
+                            temp = false;
+                    }
 
-                if (this.x + minSide < stageX && temp && minSide > 30) {
-                    block.push(new Block(this.x, this.y + this.height, minSide, minSide, true));
-					jumpLock = true;
+                    if (this.x + minSide < stageX && temp && minSide > 30) {
+                        block.push(new Block(this.x, this.y + this.height, minSide, minSide, true));
+                        jumpLock = true;
+                    }
                 }
-            }
-            else {
-                var temp = true;
-                for (var i = 0; i < block.length; i++) {
-                    if ((this.x + this.width - minSide >= block[i].getX() && this.x + this.width - minSide <= block[i].getX() + block[i].getWidth() || this.x + this.width >= block[i].getX() && this.x + this.width <= block[i].getX() + block[i].getWidth()) && ((this.y + minSide + this.height > block[i].getY() && this.y + minSide + this.height < block[i].getY() + block[i].getHeight()) || (this.y + this.height <= block[i].getY() + block[i].getHeight() && this.y + this.height >= block[i].getY())))
-                        temp = false;
-                    if (this.y + this.height + minSide > block[i].getY() && this.x + this.width - minSide < block[i].getX() + block[i].getWidth() && this.x + this.width > block[i].getX() && this.y + this.height < block[i].getY() + block[i].getHeight())
-                        temp = false;
-                }
+                else {
+                    var temp = true;
+                    for (var i = 0; i < block.length; i++) {
+                        if ((this.x + this.width - minSide >= block[i].getX() && this.x + this.width - minSide <= block[i].getX() + block[i].getWidth() || this.x + this.width >= block[i].getX() && this.x + this.width <= block[i].getX() + block[i].getWidth()) && ((this.y + minSide + this.height > block[i].getY() && this.y + minSide + this.height < block[i].getY() + block[i].getHeight()) || (this.y + this.height <= block[i].getY() + block[i].getHeight() && this.y + this.height >= block[i].getY())))
+                            temp = false;
+                        if (this.y + this.height + minSide > block[i].getY() && this.x + this.width - minSide < block[i].getX() + block[i].getWidth() && this.x + this.width > block[i].getX() && this.y + this.height < block[i].getY() + block[i].getHeight())
+                            temp = false;
+                    }
 
-                if (this.x + this.width - minSide > 0 && temp && minSide > 30) {
-                    block.push(new Block(this.x + this.width - minSide, this.y + this.height, minSide, minSide, false));
-					jumpLock = true;
+                    if (this.x + this.width - minSide > 0 && temp && minSide > 30) {
+                        block.push(new Block(this.x + this.width - minSide, this.y + this.height, minSide, minSide, false));
+                        jumpLock = true;
+                    }
                 }
             }
-			}
         }
 
         if (this.isGround) {
-			if(jump()) {
+			if(this.jump()) {
 				this.velocityY = -15;
 				this.isGround = false;
 			}
