@@ -5,7 +5,6 @@ pressKey[1] = false;
 var pressKeyLock = new Array(2);
 pressKeyLock[0] = false;
 pressKeyLock[1] = false;
-var jumpLock = false;
 
 //初期化
 window.onload = function () {
@@ -45,7 +44,6 @@ function touchSetting() {
             function touchUp(event) {
                 pressKey[0] = false;
                 pressKeyLock[0] = false;
-                jumpLock = false;
             }
 
 			var element = document.getElementById("disp");
@@ -70,11 +68,9 @@ function mouseUp(event) {
 	if (ck == 0) {
 		pressKey[0] = false;
         pressKeyLock[0] = false;
-		jumpLock = false;
 	} else if (ck == 2) {
 		pressKey[1] = false;
         pressKeyLock[1] = false;
-		jumpLock = false;
 	}
 }
 
@@ -583,9 +579,6 @@ function select() {
 				block.push(new Block(j * 20 + i * 140 + 1340 - 640, windowY - 40, 20, 20, true));
 }
 
-//var cameraX = 0;
-//var cameraY = 0;
-
 //継承関数
 var inherits = function(childCtor, parentCtor) {
     Object.setPrototypeOf(childCtor.prototype, parentCtor.prototype);
@@ -880,8 +873,7 @@ var Player = function() {
 };
 
 Player.prototype.jump = function() {
-    if(pressKey[0] && !jumpLock) {
-		jumpLock = true;
+    if(left()) {
         return true;
     }
     else {
@@ -989,6 +981,7 @@ Player.prototype.update = function(block, airBlock, circle, stageX, stageY, isHu
         else {
             this.x += this.velocityX;
         }
+        console.log(this.isGround);
         if (!this.isGround) {
             if (this.velocityY > 0) {
                 for (var i = 0; i < block.length; i++) {
@@ -1020,7 +1013,7 @@ Player.prototype.update = function(block, airBlock, circle, stageX, stageY, isHu
         else {
             var tempGround = false;
             for (var i = 0; i < block.length; i++) {
-                if (this.y + this.height == block[i].getY() && (this.x > block[i].getX() + block[i].getWidth() && this.x + this.width < block[i].getX())) {
+                if (!(this.x + this.width < block[i].x || block[i].x + block[i].width < this.x) && block[i].y - this.y == this.height){
                     tempGround = true;
                 }
             }
@@ -1063,7 +1056,6 @@ Player.prototype.update = function(block, airBlock, circle, stageX, stageY, isHu
 
                     if (this.x + minSide < stageX && temp && minSide > 30) {
                         block.push(new Block(this.x, this.y + this.height, minSide, minSide, true));
-                        jumpLock = true;
                     }
                 }
                 else {
@@ -1077,7 +1069,6 @@ Player.prototype.update = function(block, airBlock, circle, stageX, stageY, isHu
 
                     if (this.x + this.width - minSide > 0 && temp && minSide > 30) {
                         block.push(new Block(this.x + this.width - minSide, this.y + this.height, minSide, minSide, false));
-                        jumpLock = true;
                     }
                 }
             }
