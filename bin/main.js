@@ -22,11 +22,25 @@ window.onload = function () {
 	screenCanvas.height = 480;
 	ctx = screenCanvas.getContext('2d');
 
-	screenCanvas.addEventListener('mousedown', mouseDown, true);
-	screenCanvas.addEventListener('mouseup', mouseUp, true);
-   
+  var getDevice = (function(){
+    var ua = navigator.userAgent;
+    if(ua.indexOf('iPhone') > 0 || ua.indexOf('iPod') > 0 || ua.indexOf('Android') > 0 && ua.indexOf('Mobile') > 0){
+        return 'sp';
+    }else if(ua.indexOf('iPad') > 0 || ua.indexOf('Android') > 0){
+        return 'sp';
+    }else{
+        return 'other';
+    }
+  })();
+
+  if(getDevice == 'other'){
+  	screenCanvas.addEventListener('mousedown', mouseDown, true);
+  	screenCanvas.addEventListener('mouseup', mouseUp, true);
+  }else{
+    touchSetting();
+  }
 	select();
-	
+
 };
 
 var main = function () {
@@ -135,7 +149,7 @@ function reset(s) {
 	}
 
 }
-	
+
 function select() {
 	start = true;
 	cameraX = 0;
@@ -226,7 +240,7 @@ function select() {
 			[ 0, 0, 1 ],
 			[ 1, 1, 0 ],
 			[]
-		]	
+		]
 	];
 	for (var i = 0; i < 16; i++) {
 		for (var j = 0; j < 30; j++) {
@@ -274,18 +288,23 @@ function select() {
 				block.push(new Block(j * 20 + i * 140 + 1340 - 640, windowY - 40, 20, 20, true));
 }
 
-function touch() {
+function touchSetting() {
 	if(window.TouchEvent){
 		if(window.addEventListener){
-			function TouchEventFunc(e){
-				console.log("タッチスクリーン入力された");
-			}
+      function touchDown(event) {
+      	pressKey[0] = true;
+      }
 
-			var element = document.getElementById("aaa");
+      function touchUp(event) {
+      	pressKey[0] = false;
+        pressKeyLock[0] = false;
+    		jumpLock = false;
+      }
 
-			element.addEventListener("touchstart",TouchEventFunc);
+			var element = document.getElementById("disp");
 
-			element.addEventListener("touchend",TouchEventFunc);
+			element.addEventListener("touchstart",touchDown);
+			element.addEventListener("touchend",touchUp);
 		}
 	}
 }
@@ -511,7 +530,7 @@ Block.prototype.update = function() {
 		this.trans++;
 		this.t = 0;
 	}
-}	
+}
 
 Block.prototype.draw = function() {
 	if(this.trans == 0) {
@@ -689,7 +708,7 @@ Player.prototype.update = function() {
     }
     else {
         var tempX = -1, tempY = -1;
-        
+
         if (windowX + cameraX < stageX && this.x - cameraX > windowX * 2 / 3)
             cameraX = this.x - windowX * 2 / 3;
         if (cameraX > 0 && this.x - cameraX < windowX / 3)
@@ -887,4 +906,3 @@ Player.prototype.getX = function() {
 Player.prototype.getY = function() {
 	return this.y;
 };
-
