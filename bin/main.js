@@ -160,7 +160,7 @@ Game.prototype.update = function(){
 			this.reset(this.stage);
 		if (!this.start && this.player.getDotY() < -100 && this.player.getClearCnt() > 50) {
 			this.stage++;
-			this.reset(this.stage);
+			this.select();
 		}
         if (this.windowX + this.cameraX < this.stageX && this.player.getX() - this.cameraX > this.windowX * 2 / 3)
             this.cameraX = this.player.getX() - this.windowX * 2 / 3;
@@ -205,7 +205,7 @@ Game.prototype.reset = function(s) {
 	this.circle = new Array();
 	this.airBlock = new Array();
     this.nowStage = s + 1;
-	switch (s)
+	switch (s%5)
 	{
 	case 0:
 		this.stageX = 640;
