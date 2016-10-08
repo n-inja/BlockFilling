@@ -101,7 +101,7 @@ var main = function() {
 };
 setInterval(main, 1000/60);
 
-var Game = function() {
+const Game = function() {
     this.block = new Array();
     this.airBlock = new Array();
     this.circle = new Array();
@@ -116,6 +116,7 @@ var Game = function() {
     this.stage = 0;
     this.lock = true;
     this.isHub = true;
+    this.nowStage = 0;
     this.t = 0;
 };
 
@@ -142,12 +143,12 @@ Game.prototype.update = function(){
         if(this.player.getClearCnt() > 0 && this.circle.length > 0)
             this.circle = new Array();
 		if (this.player.getDeathCnt() < -100)
-			this.select();
+			this.reset(this.stage);
 		if (!this.start && this.player.getY() > this.windowY + 100)
 			this.reset(this.stage);
 		if (!this.start && this.player.getDotY() < -100 && this.player.getClearCnt() > 50) {
 			this.stage++;
-			this.select();
+			this.reset(this.stage);
 		}
         if (this.windowX + this.cameraX < this.stageX && this.player.getX() - this.cameraX > this.windowX * 2 / 3)
             this.cameraX = this.player.getX() - this.windowX * 2 / 3;
@@ -157,6 +158,8 @@ Game.prototype.update = function(){
             if (left())
                 this.game = true;
         }
+        if(this.nowStage == 0)
+            this.player.resetDeathCnt();
         this.t++;
     }
 };
@@ -189,6 +192,7 @@ Game.prototype.reset = function(s) {
 	this.block = new Array();
 	this.circle = new Array();
 	this.airBlock = new Array();
+    this.nowStage = s + 1;
 	switch (s)
 	{
 	case 0:
@@ -251,6 +255,7 @@ Game.prototype.select = function(){
 	this.block = new Array();
 	this.airBlock = new Array();
 	this.circle = new Array();
+    this.nowStage = 0;
 	var logo = [
 		[],
 		[0, 1, 1, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -379,205 +384,6 @@ Game.prototype.select = function(){
 			else
 				this.block.push(new Block(j * 20 + i * 140 + 1340 - 640, this.windowY - 40, 20, 20, true));
 };
-
-function reset(s) {
-	start = false;
-	cameraX = 0;
-	cameraY = 0;
-	player = new Player();
-	block = new Array();
-	circle = new Array();
-	airBlock = new Array();
-	switch (s)
-	{
-	case 0:
-		stageX = 640;
-		for (var i = 0; i < 2; i++)
-			block.push(new Block(stageX - 100, windowY - 300 + i * 100, 100, 100, false));
-		for (var i = 0; i < 7; i++)
-			block.push(new Block(i * 100, windowY - 100, 100, 101, false));
-		circle.push(new Circle(stageX - 80, windowY - 380));
-		break;
-	case 1:
-		stageX = 1000;
-		for (var i = 0; i < 3; i++)
-			block.push(new Block(i * 100, windowY - 100, 100, 101, false));
-		for (var i = 0; i < 4; i++)
-			block.push(new Block(600 + i * 100, windowY - 100, 100, 101, false));
-		for (var i = 0; i < 3; i++)
-			airBlock.push(new AirBlock(300 + i * 100, windowY - 100, 100, 101, false));
-		circle.push(new Circle(stageX - 80, windowY - 180));
-		break;
-	case 2:
-		stageX = 1040;
-		for (var i = 0; i < 3; i++)
-			block.push(new Block(i * 80, windowY - 80, 80, 81, false));
-		block.push(new Block(160, windowY - 160, 80, 80, false));
-		for (var i = 0; i < 6; i++)
-			block.push(new Block(stageX - 80 - i * 80, windowY - 80, 80, 81, false));
-		circle.push(new Circle(stageX - 80, windowY - 380));
-		break;
-	case 3:
-		stageX = 640;
-		for (var i = 0; i < 4; i++)
-			block.push(new Block(i * 80, windowY - 80, 80, 81, false));
-		for (var i = 0; i < 4; i++)
-			airBlock.push(new AirBlock(i * 80 + 320, windowY - 80, 80, 81, false));
-		circle.push(new Circle(20, 20));
-		break;
-	case 4:
-		stageX = 640;
-		for (var i = 0; i < 9; i++)
-			block.push(new Block(i * 40, windowY - 40, 40, 41, false));
-		for (var i = 0; i < 3; i++)
-			block.push(new Block(i * 60 + 230, 0, 60, 60, false));
-		for (var i = 0; i < 2; i++)
-			block.push(new Block(i * 120 + 230, 60, 60, 60, false));
-		circle.push(new Circle(290, 60));
-		break;
-	default:
-		break;
-	}
-
-}
-
-function select() {
-	start = true;
-	cameraX = 0;
-	cameraY = 0;
-	stageX = 2000 - 640;
-	player = new Player();
-	block = new Array();
-	airBlock = new Array();
-	circle = new Array();
-	var logo = [
-		[],
-		[0, 1, 1, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-		[0, 1, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-		[0, 1, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-		[0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0, 1, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-		[0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0, 1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-		[0, 1, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-		[],
-		[0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 1, 0, 1, 1, 0, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-		[0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-		[0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 1, 1, 0, 0, 0, 1, 1, 0],
-		[0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0],
-		[0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0, 1, 0, 0, 1, 1, 0],
-		[0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0, 1, 0, 0, 0, 1, 0],
-		[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0],
-		[]
-	];
-	var cha = [
-		[],
-		[0, 0, 1, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-		[0, 1, 2, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-		[0, 1, 2, 0, 1, 0, 0, 0, 1, 0, 1, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0],
-		[0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0],
-		[0, 1, 0, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0],
-		[0, 0, 1, 1, 0, 0, 0, 1, 0, 0, 1, 1, 1, 0, 1, 0, 1, 0, 1, 1, 0, 0, 0, 0, 0, 0],
-		[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0,0 ],
-		[],
-		[0, 0, 1, 1, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-		[0, 1, 0, 2, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0],
-		[0, 1, 0, 2, 1, 0, 1, 0, 0, 0, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 1, 1, 1, 0],
-		[0, 1, 0, 0, 1, 0, 1, 0, 0, 0, 1, 1, 0, 0, 1, 1, 1, 0, 1, 0, 1, 0, 0, 1, 0, 0],
-		[0, 1, 0, 0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0],
-		[0, 0, 1, 1, 0, 0, 0, 1, 1, 0, 1, 0, 0, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0],
-		[]
-	];
-	var num = [
-		[
-			[],
-			[ 0, 1, 0 ],
-			[ 1, 1, 0 ],
-			[ 0, 1, 0 ],
-			[ 0, 1, 0 ],
-			[ 1, 1, 1 ],
-			[]
-		],
-		[
-			[],
-			[ 1, 1, 0 ],
-			[ 0, 0, 1 ],
-			[ 0, 1, 0 ],
-			[ 1, 0, 0 ],
-			[ 1, 1, 1 ],
-			[]
-		],
-		[
-			[],
-			[ 1, 1, 0 ],
-			[ 0, 0, 1 ],
-			[ 0, 1, 0 ],
-			[ 0, 0, 1 ],
-			[ 1, 1, 0 ],
-			[]
-		],
-		[
-			[],
-			[ 0, 0, 1 ],
-			[ 0, 1, 1 ],
-			[ 1, 0, 1 ],
-			[ 1, 1, 1 ],
-			[ 0, 0, 1 ],
-			[]
-		],
-		[
-			[],
-			[ 1, 1, 1 ],
-			[ 1, 0, 0 ],
-			[ 1, 1, 0 ],
-			[ 0, 0, 1 ],
-			[ 1, 1, 0 ],
-			[]
-		]
-	];
-	for (var i = 0; i < 16; i++) {
-		for (var j = 0; j < 30; j++) {
-			if(logo[i][j] == 1)
-				block.push(new Block(20 + j*20, i*20, 20, 20, true));
-		}
-	}
-	/*
-	for (var i = 0; i < 16; i++) {
-		for (var j = 0; j < 26; j++) {
-			if (cha[i][j] == 1){
-				airBlock.push(new AirBlock(680 + j * 20, i * 20 + 40, 20, 20, true));
-			}
-			else if(cha[i][j] == 2)
-				block.push(new Block(680 + j * 20, i * 20 + 40, 20, 20, true));
-		}
-	}
-	*/
-	for (var i = 0; i < 5; i++) {
-		for (var j = 0; j < 7; j++) {
-			for (var k = 0; k < 3; k++) {
-				if (num[i][j][k] == 1) {
-					if(stage%5 <= i)
-						block.push(new Block(1360 + i * 140 + k * 20 - 640, 200 + j * 20, 20, 20, true));
-					else
-						airBlock.push(new AirBlock(1360 + i * 140 + k * 20 - 640, 200 + j * 20, 20, 20, true));
-				}
-			}
-		}
-	}
-
-	for (var i = 0; i < 32; i++)
-		block.push(new Block(i*20, windowY - 20, 20, 20, true));
-	/*for (var i = 0; i < 640 / 20; i++)
-		block.push(new Block(i * 20, windowY - 40, 20, 20, true));*/
-	for (var i = 0; i < 2; i++)
-		for (var j = 33; j < 35; j++)
-			for (var k = 0; k < 5; k++)
-				block.push(new Block(j * 20 + k*140, windowY - 40 + i * 20, 20, 20, true));
-	for (var i = 0; i < 5; i++)
-		for (var j = 0; j < 5; j++)
-			if (stage%5 <= i)
-				airBlock.push(new AirBlock(j * 20 + i * 140 + 1340 - 640, windowY - 40, 20, 20, true));
-			else
-				block.push(new Block(j * 20 + i * 140 + 1340 - 640, windowY - 40, 20, 20, true));
-}
 
 //継承関数
 var inherits = function(childCtor, parentCtor) {
@@ -1121,4 +927,8 @@ Player.prototype.getX = function() {
 
 Player.prototype.getY = function() {
 	return this.y;
+};
+
+Player.prototype.resetDeathCnt = function() {
+    this.deathCnt = 0;
 };
