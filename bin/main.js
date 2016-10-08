@@ -6,6 +6,18 @@ var pressKeyLock = new Array(2);
 pressKeyLock[0] = false;
 pressKeyLock[1] = false;
 
+(window.onresize = function(){
+  var cv = document.querySelector("#disp");
+  var rect = document.body.getBoundingClientRect();
+  var scaleW = rect.width / cv.width;
+  var scaleH = rect.height / cv.height;
+  var scale = scaleW < scaleH ? scaleW : scaleH;
+  cv.style.transform = "scale(" + scale + ", " + scale + ")";
+  cv.style.position  = "fixed";
+  cv.style.left = ((scale - 1) * cv.width / 2 + (rect.width - cv.width * scale) / 2) + "px";
+  cv.style.top = ((scale - 1) * cv.height / 2 + (rect.height - cv.height * scale) / 2) + "px";
+})();
+
 //初期化
 window.onload = function () {
 	screenCanvas = document.getElementById('disp');
